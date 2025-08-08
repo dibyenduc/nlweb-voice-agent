@@ -1,4 +1,4 @@
-preferred_provider: azure_openai
+preferred_provider: ollama 
 
 providers:
   openai:
@@ -23,7 +23,7 @@ providers:
     model: snowflake-arctic-embed-m-v1.5
   
   ollama:
-    api_endpoint_env: OLLAMA_URL
+    api_endpoint_env: http://localhost:11434 
     model: qwen3:0.6b
 
   elasticsearch:

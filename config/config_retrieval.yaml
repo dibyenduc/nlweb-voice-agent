@@ -111,7 +111,7 @@ endpoints:
   qdrant_url:
     enabled: false
     # Connect to a Qdrant server at a specific URL
-    api_endpoint_env: QDRANT_URL
+    api_endpoint_env: "http://localhost:6333"
     # Optional API key for authentication
     api_key_env: QDRANT_API_KEY
     # Set the collection name to use
