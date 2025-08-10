@@ -1,96 +1,119 @@
-# What is NLWeb?
+# NLWeb Voice Agent 🎤
 
-**NLWeb** simplifies the process of building conversational interfaces for websites. It natively supports MCP (Model Context Protocol), allowing the same natural language APIs to serve both humans and AI agents.
+A voice-enabled extension for Microsoft's NLWeb semantic search system that allows users to interact with podcast databases through natural speech commands.
 
-Schema.org and related semi-structured formats like RSS — used by over 100 million websites — have become not just de facto syndication mechanisms, but also a semantic layer for the web. NLWeb leverages these to enable natural language interfaces more easily.
+## Overview
 
-NLWeb is a collection of open protocols and associated open source tools. Its main focus is establishing a foundational layer for the AI Web — much like HTML revolutionized document sharing. To make this vision reality, NLWeb provides practical implementation code—not as the definitive solution, but as proof-of-concept demonstrations showing one possible approach. We expect and encourage the community to develop diverse, innovative implementations that surpass our examples. This mirrors the web's own evolution, from the humble 'htdocs' folder in NCSA's http server to today's massive data center infrastructures—all unified by shared protocols that enable seamless communication.
+This project enhances the original [NLWeb](https://github.com/nlweb-ai/NLWeb) open-source semantic search platform by adding comprehensive voice interaction capabilities. Users can now speak their queries naturally and receive audio responses about podcast episodes from "Behind the Tech" and "Decoder" podcast collections.
 
-AI has the potential to enhance every web interaction. Realizing this requires a collaborative spirit reminiscent of the Web's early "barn raising" days. Shared protocols, sample implementations, and community participation are all essential. NLWeb brings together protocols, Schema.org formats, and sample code to help sites quickly implement conversational endpoints — benefitting both users through natural interfaces and agents through structured interaction.
+## My Contributions
 
-> Join us in building this connected web of agents.
+I built a complete voice interface layer on top of the existing NLWeb API, adding:
 
-## How It Works
+- **Speech Recognition**: Real-time voice input processing using Google Speech Recognition with offline fallback
+- **Text-to-Speech**: Natural voice responses using pyttsx3 with optimized speech parameters
+- **Intelligent Response Processing**: Advanced SSE (Server-Sent Events) stream parsing that handles complex API responses
+- **Robust Error Handling**: Fallback mechanisms for network timeouts, speech recognition failures, and API issues
+- **Interactive Voice Loop**: Continuous conversation mode with natural exit commands
+- **Response Optimization**: Voice-friendly content formatting with appropriate length limits and cleanup
+- **Comprehensive Logging**: Detailed emoji-enhanced logging for debugging and monitoring
 
-NLWeb has two primary components:
+## How to Run It
 
-1. **A simple protocol** to interact with a site using natural language. It returns responses in JSON using Schema.org. See [REST API docs](/docs/nlweb-rest-api.md) for details.
+### Prerequisites
 
-2. **A straightforward implementation** that uses existing markup on sites with structured lists (e.g., products, recipes, attractions, reviews). Combined with UI widgets, this enables conversational interfaces to be added with ease. See [Life of a Chat Query](docs/life-of-a-chat-query.md) for more details.
+1. **NLWeb Backend**: First, set up and run the original NLWeb system following the [NLWeb Hello World guide](https://github.com/nlweb-ai/NLWeb/blob/main/docs/nlweb-hello-world.md)
 
-## NLWeb and MCP/A2A
+2. **Python Dependencies**: Install the required voice processing libraries:
+```bash
+pip install speechrecognition pyttsx3 requests
+```
 
-MCP and A2A are emerging standards for enabling chatbots and AI assistants to interact with tools and each other. Every NLWeb instance also acts as an MCP server (and soon A2A) and supports a core method, `ask`, which allows a natural language question to be posed to a website.
+3. **System Requirements**:
+   - Microphone access for speech input
+   - Audio output for TTS responses
+   - Internet connection for Google Speech Recognition (with offline fallback)
 
-The response returned uses Schema.org — a widely adopted vocabulary for describing web data.
+### Running the Voice Agent
 
-**In short, NLWeb is to MCP/A2A what HTML is to HTTP.**
+1. **Start NLWeb Backend** (in separate terminal):
+```bash
+# Follow NLWeb documentation to start the backend service on localhost:8000
+```
 
-## Platform Compatibility
+2. **Launch Voice Agent**:
+```bash
+python working_voice_agent.py
+```
 
-NLWeb is platform-agnostic and supports:
+3. **Voice Commands**: Speak naturally after hearing the initialization message:
+   - "What podcasts do you have?"
+   - "Tell me about Microsoft"
+   - "Find episodes about machine learning"
+   - Say "goodbye", "quit", "stop", or "exit" to end
 
-* **Operating systems**: Windows, macOS, Linux
-* **Vector stores**: [Qdrant](/docs/setup-qdrant.md), [Snowflake](docs/setup-snowflake.md), [Milvus](/docs/setup-milvus.md), [Azure AI Search](docs/setup-azure.md), [Elasticsearch](docs/setup-elasticsearch.md), [Postgres](docs/setup-postgres.md)
-* **LLMs**: OpenAI, DeepSeek, Gemini, Anthropic, Inception, [HuggingFace](docs/setup-huggingface.md)
+### Test Modes
 
-It is designed to be lightweight and scalable — capable of running on everything from data center clusters to laptops and, soon, mobile devices.
+Run automated tests without voice interaction:
 
-## Repository
+```bash
+# Quick test
+python working_voice_agent.py test quick
 
-This repository includes:
+# Full test suite
+python working_voice_agent.py test full
 
-* Core service code for handling natural language queries
-* Connectors for popular LLMs and vector databases
-* Tools to ingest data (e.g., Schema.org JSONL, RSS) into a vector database
-* A web server front end that includes the service and a sample UI
+# Debug mode
+python working_voice_agent.py test debug
+```
 
-Most production deployments will:
+## Demo Output
 
-* Use their own user interface
-* Integrate NLWeb directly into their application environment
-* Connect NLWeb to live databases instead of duplicating content (to avoid freshness issues)
+```
+[INFO] 🔧 Initializing NLWeb Voice Agent...
+[INFO] 🎤 Setting up speech recognition...
+[INFO] 🔊 Setting up text-to-speech...
+[INFO] ✅ NLWeb Voice Agent initialized.
+[INFO] 🚀 Starting interactive voice mode...
 
-## Documentation
+[Speaking] "Hello! I'm your podcast voice assistant..."
 
-### Getting Started
+[INFO] 🎤 Listening... (speak clearly)
+[INFO] 📝 Heard: 'Microsoft'
+[INFO] ❓ Asking NLWeb: 'Microsoft'
+[INFO] 📊 Found 50 relevant documents.
+[INFO] ✅ Generated response from 3 recommendations
 
-* [Hello world on your laptop](docs/nlweb-hello-world.md)
-* [Running it on Azure](docs/setup-azure.md)
-* [Running with Docker](docs/setup-docker.md)
-* Running on GCP — *coming soon*
-* Running on AWS — *coming soon*
+[Speaking] "Here are relevant podcast episodes: 
+1. Lisa Su, Chair and CEO, AMD 
+2. Xyla Foxlin, Engineer and YouTube Creator 
+3. William A. Adams, Software Engineer, DEI Innovator, and Philanthropist"
+```
 
-### NLWeb Details
+## Architecture
 
-* [Life of a Chat Query](docs/life-of-a-chat-query.md)
-* [Modifying Prompts](docs/nlweb-prompts.md)
-* [Changing Control Flow](docs/nlweb-control-flow.md)
-* [Modifying the User Interface](docs/nlweb-user-interface.md)
-* [REST API](docs/nlweb-rest-api.md)
-* [Adding Memory](docs/nlweb-memory.md)
-* [Using the Check Connectivity Script to Test your Configuration](docs/nlweb-check-connectivity.md)
+The voice agent operates as a client to the NLWeb API, providing:
+
+- **Speech Input Layer**: Captures and processes voice commands
+- **API Integration**: Communicates with NLWeb backend via REST API
+- **Response Processing**: Parses streaming SSE responses and extracts recommendations  
+- **Audio Output**: Converts text responses to natural speech
+- **Error Recovery**: Handles various failure scenarios gracefully
+
+## Original Project
+
+This project builds upon [Microsoft's NLWeb](https://github.com/nlweb-ai/NLWeb), an open-source semantic search platform for enterprise knowledge bases. NLWeb provides the core semantic search capabilities, while this voice agent adds an intuitive spoken interface.
+
+## Features
+
+- 🎙️ **Natural Speech Recognition**: Speak queries in plain English
+- 🔊 **Audio Responses**: Hear results read aloud with natural voice synthesis
+- 🔄 **Continuous Interaction**: Maintains conversation context throughout session
+- 🛡️ **Robust Fallbacks**: Multiple error recovery mechanisms
+- 📊 **Rich Logging**: Comprehensive status tracking with visual indicators
+- ⚡ **Multiple Modes**: Interactive voice mode and automated testing
+- 🎯 **Smart Filtering**: Optimized for voice-friendly response lengths
 
 ## License
 
-NLWeb uses the [MIT License](LICENSE).
-
-## Deployment (CI/CD)
-
-CI/CD pipelines are not yet included. Contributions to add automated testing or deployment workflows are welcome.
-
-## Access
-
-For questions about this GitHub project, please contact [NLWeb Support](mailto:NLWebSup@microsoft.com).
-
-## Contributing
-
-See [Contribution Guidance](CONTRIBUTING.md) for more details.
-
-## Contributor Wall of Fame
-
-[![nlweb contributors](https://contrib.rocks/image?repo=microsoft/nlweb)](https://github.com/microsoft/nlweb/graphs/contributors)
-
-## Trademarks
-
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft trademarks or logos is subject to and must follow [Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general). Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship. Any use of third-party trademarks or logos are subject to those third-party's policies.
+This voice extension maintains compatibility with the original NLWeb project's licensing terms.
