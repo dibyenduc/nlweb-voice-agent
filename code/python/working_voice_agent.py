@@ -29,19 +29,19 @@ class VoiceAgent:
         self.base_url = base_url
         self.sites = ["Behind-the-Tech", "Decoder"]
         
-        logger.info("🔧 Initializing NLWeb Voice Agent...")
+        logger.info(" Initializing NLWeb Voice Agent...")
         self._init_speech_components()
-        logger.info("✅ NLWeb Voice Agent initialized.")
+        logger.info(" NLWeb Voice Agent initialized.")
 
     def _init_speech_components(self):
         """Initializes speech recognition and text-to-speech engines."""
-        logger.info("🎤 Setting up speech recognition...")
+        logger.info(" Setting up speech recognition...")
         self.recognizer = sr.Recognizer()
         self.microphone = sr.Microphone()
         
         # Improved microphone calibration
         with self.microphone as source:
-            logger.info("🔧 Adjusting for ambient noise... Please be quiet for a moment.")
+            logger.info(" Adjusting for ambient noise... Please be quiet for a moment.")
             self.recognizer.adjust_for_ambient_noise(source, duration=2)
         
         # Fine-tune recognition settings
@@ -50,7 +50,7 @@ class VoiceAgent:
         self.recognizer.pause_threshold = 0.8
         self.recognizer.phrase_threshold = 0.3
         
-        logger.info("🔊 Setting up text-to-speech...")
+        logger.info(" Setting up text-to-speech...")
         self.tts_engine = pyttsx3.init()
         voices = self.tts_engine.getProperty('voices')
         if voices:
@@ -64,7 +64,7 @@ class VoiceAgent:
         
         self.tts_engine.setProperty('rate', 160)  # Slightly slower for better understanding
         self.tts_engine.setProperty('volume', 0.9)
-        logger.info("✅ Speech components ready.")
+        logger.info(" Speech components ready.")
 
     def listen_for_speech(self, timeout: int = 8, phrase_limit: int = 15) -> Optional[str]:
         """
@@ -78,48 +78,48 @@ class VoiceAgent:
             Optional[str]: The recognized text or None if no speech is detected or an error occurs.
         """
         try:
-            logger.info("🎤 Listening... (speak clearly)")
+            logger.info(" Listening... (speak clearly)")
             with self.microphone as source:
                 # Listen with longer timeout and phrase limit
                 audio = self.recognizer.listen(source, timeout=timeout, phrase_time_limit=phrase_limit)
             
-            logger.info("🔍 Processing speech...")
+            logger.info(" Processing speech...")
             
             # Try Google Speech Recognition first, then fallback to offline
             try:
                 text = self.recognizer.recognize_google(audio, language='en-US')
-                logger.info(f"📝 Heard: '{text}'")
+                logger.info(f" Heard: '{text}'")
                 return text.strip()
             except (sr.UnknownValueError, sr.RequestError):
                 # Fallback to offline recognition if available
                 try:
                     text = self.recognizer.recognize_sphinx(audio)
-                    logger.info(f"📝 Heard (offline): '{text}'")
+                    logger.info(f" Heard (offline): '{text}'")
                     return text.strip()
                 except (sr.UnknownValueError, sr.RequestError):
                     raise sr.UnknownValueError("Could not understand speech")
             
         except sr.WaitTimeoutError:
-            logger.warning("⏰ No speech detected. Please try speaking louder or closer to the microphone.")
+            logger.warning(" No speech detected. Please try speaking louder or closer to the microphone.")
             return None
         except sr.UnknownValueError:
-            logger.warning("❌ Could not understand speech. Please speak more clearly.")
+            logger.warning(" Could not understand speech. Please speak more clearly.")
             return None
         except sr.RequestError as e:
-            logger.error(f"❌ Speech recognition service error: {e}")
+            logger.error(f" Speech recognition service error: {e}")
             return None
 
     def speak_response(self, text: str):
         """Converts text to speech and plays it with better handling."""
         if not text or not text.strip():
-            logger.warning("⚠️ Empty response - using fallback message")
+            logger.warning(" Empty response - using fallback message")
             text = "I found some results but couldn't generate a proper response. The system found documents but there may be an issue with content processing."
         
         # Limit response length for better voice experience
         if len(text) > 500:
             text = text[:500] + "... Would you like me to continue?"
         
-        logger.info(f"🔊 Speaking: {text[:100]}{'...' if len(text) > 100 else ''}")
+        logger.info(f" Speaking: {text[:100]}{'...' if len(text) > 100 else ''}")
         
         try:
             # Use direct TTS without threading to avoid run loop issues
@@ -149,7 +149,7 @@ class VoiceAgent:
         Returns:
             str: The final, cleaned response from the API.
         """
-        logger.info(f"❓ Asking NLWeb: '{query}'")
+        logger.info(f" Asking NLWeb: '{query}'")
         payload = {
             "query": query,
             "top_k": 3,  # Reduced for more focused results
@@ -171,24 +171,24 @@ class VoiceAgent:
             )
             
             if response.status_code != 200:
-                logger.error(f"❌ API Error: {response.status_code} - {response.text}")
+                logger.error(f" API Error: {response.status_code} - {response.text}")
                 return f"Sorry, I encountered an API error. The service might be busy."
             
             return self._parse_sse_response(response)
         
         except requests.exceptions.Timeout:
-            logger.error("❌ Request timed out - LLM is too slow, trying direct search")
+            logger.error(" Request timed out - LLM is too slow, trying direct search")
             # Fallback: try to get just search results from web interface format
             return self._get_web_interface_results(query)
         except requests.exceptions.RequestException as e:
-            logger.error(f"❌ Request failed: {e}")
+            logger.error(f" Request failed: {e}")
             return "Sorry, I couldn't connect to the knowledge base. Please check if the service is running."
 
     def _parse_sse_response(self, response: requests.Response) -> str:
         """
         Parses the Server-Sent Events (SSE) response from the API stream.
         """
-        logger.info("🔍 Processing your query...")
+        logger.info(" Processing your query...")
         
         final_answer = ""
         assembled_content = ""
@@ -211,7 +211,7 @@ class VoiceAgent:
                 
                 if msg_type == 'retrieval_count':
                     retrieval_count = data.get('count', 0)
-                    logger.info(f"📊 Found {retrieval_count} relevant documents.")
+                    logger.info(f" Found {retrieval_count} relevant documents.")
                     if retrieval_count == 0:
                         return "I couldn't find any relevant episodes in the podcast database. Try asking about technology topics, Microsoft, AI, or specific companies."
                 
@@ -232,14 +232,14 @@ class VoiceAgent:
                     assembled_content += data['content']
                     
             except json.JSONDecodeError as e:
-                logger.warning(f"⚠️ JSON decode error: {e}")
+                logger.warning(f" JSON decode error: {e}")
                 continue
         
     def _parse_sse_response(self, response: requests.Response) -> str:
         """
         Parses the Server-Sent Events (SSE) response from the API stream.
         """
-        logger.info("🔍 Processing your query...")
+        logger.info(" Processing your query...")
         
         final_answer = ""
         assembled_content = ""
@@ -262,11 +262,11 @@ class VoiceAgent:
                 msg_type = data.get('message_type', data.get('type', 'unknown'))
                 
                 # Debug: log all message types we receive
-                logger.info(f"📦 Received: {msg_type}")
+                logger.info(f" Received: {msg_type}")
                 
                 if msg_type == 'retrieval_count':
                     retrieval_count = data.get('count', 0)
-                    logger.info(f"📊 Found {retrieval_count} relevant documents.")
+                    logger.info(f" Found {retrieval_count} relevant documents.")
                     if retrieval_count == 0:
                         return "I couldn't find any relevant episodes in the podcast database. Try asking about technology topics, Microsoft, AI, or specific companies."
                 
@@ -278,7 +278,7 @@ class VoiceAgent:
                         rec_list = recs.get('recommendations', recs.get('Recommendations', []))
                         if rec_list:
                             recommendations = rec_list
-                            logger.info(f"🎯 Found {len(recommendations)} recommendations")
+                            logger.info(f" Found {len(recommendations)} recommendations")
                             # Log the actual recommendations for debugging
                             for i, rec in enumerate(rec_list[:2]):
                                 logger.info(f"   {i+1}. {rec.get('item', 'Unknown')}")
@@ -286,13 +286,13 @@ class VoiceAgent:
                 
                 elif msg_type == 'result_batch':
                     # Handle result_batch messages which contain the actual search results
-                    logger.info(f"📄 Processing result_batch...")
+                    logger.info(f" Processing result_batch...")
                     batch_content = data.get('content', data.get('results', data.get('batch', [])))
                     
                     # Debug: log what we actually received
-                    logger.info(f"🔍 Batch content type: {type(batch_content)}")
+                    logger.info(f" Batch content type: {type(batch_content)}")
                     if hasattr(batch_content, '__len__'):
-                        logger.info(f"🔍 Batch length: {len(batch_content)}")
+                        logger.info(f" Batch length: {len(batch_content)}")
                     
                     if isinstance(batch_content, list):
                         # Extract episode titles from batch results
@@ -302,25 +302,25 @@ class VoiceAgent:
                                 url = result.get('url', result.get('link', ''))
                                 if title and title not in [r.get('item', '') for r in recommendations]:
                                     recommendations.append({'item': title, 'url': url})
-                                    logger.info(f"   📎 Added: {title}")
+                                    logger.info(f"    Added: {title}")
                     
                     elif isinstance(batch_content, str) and batch_content.strip():
                         # If it's a string, try to extract useful info
                         assembled_content += batch_content + " "
-                        logger.info(f"📝 Added string content: {batch_content[:50]}...")
+                        logger.info(f" Added string content: {batch_content[:50]}...")
                     
                     else:
                         # Debug: log the actual structure
-                        logger.info(f"🐛 Unexpected batch content: {str(batch_content)[:100]}...")
+                        logger.info(f" Unexpected batch content: {str(batch_content)[:100]}...")
                     
-                    logger.info(f"📊 Total recommendations so far: {len(recommendations)}")
+                    logger.info(f" Total recommendations so far: {len(recommendations)}")
                 
                 elif msg_type == 'complete':
                     final_answer = data.get('answer', data.get('content', ''))
-                    logger.info(f"✅ Complete message: content={bool(final_answer)}")
+                    logger.info(f" Complete message: content={bool(final_answer)}")
                     # Only break if we haven't found recommendations yet
                     if not recommendations:
-                        logger.warning("⚠️ Complete message but no recommendations found")
+                        logger.warning(" Complete message but no recommendations found")
                     break
                 
                 elif msg_type in ['license', 'data_retention', 'ui_component']:
@@ -329,14 +329,14 @@ class VoiceAgent:
                     
                 elif 'content' in data:
                     content = data['content']
-                    if content and content not in ["This data is provided under MIT License. See https://opensource.org/license/mit for details.", 
+                    if content and content not in ["This data is provided under MIT License. See [https://opensource.org/license/mit](https://opensource.org/license/mit) for details.", 
                                                   "Data provided may be retained for up to 1 day.",
-                                                  "This field may be used to provide a link to the web components that can be used to display the results."]:
+                                                  "This field may be used to provide a link to the web components that can be used to display the results." ]:
                         assembled_content += content
-                        logger.debug(f"📄 Added content: {content[:50]}...")
+                        logger.debug(f" Added content: {content[:50]}...")
                     
             except json.JSONDecodeError as e:
-                logger.warning(f"⚠️ JSON decode error: {e}")
+                logger.warning(f" JSON decode error: {e}")
                 continue
         
         # Build response from recommendations if available (this should work now)
@@ -347,7 +347,7 @@ class VoiceAgent:
                 # Just use the episode title for cleaner voice output
                 response_parts.append(f"{i}. {item}")
             final_response = " ".join(response_parts)
-            logger.info(f"✅ Generated response from {len(recommendations)} recommendations")
+            logger.info(f" Generated response from {len(recommendations)} recommendations")
             return final_response
         
         # Use final answer or assembled content
@@ -359,15 +359,15 @@ class VoiceAgent:
             else:
                 return "I couldn't find any relevant information. Try asking about technology topics or specific podcast episodes."
 
-        logger.info(f"✅ Generated final response: {result[:100]}...")
+        logger.info(f" Generated final response: {result[:100]}...")
         return self._clean_response(result)
 
     def _clean_response(self, response: str) -> str:
         """Cleans up extraneous metadata from the API response."""
-        logger.info(f"🧹 Cleaning response: {response[:200]}...")
+        logger.info(f" Cleaning response: {response[:200]}...")
         
         cleanup_phrases = [
-            "This data is provided under MIT License. See https://opensource.org/license/mit for details.",
+            "This data is provided under MIT License. See [https://opensource.org/license/mit](https://opensource.org/license/mit) for details.",
             "Data provided may be retained for up to 1 day.",
             "This field may be used to provide a link to the web components that can be used to display the results.",
             "[End of response]",
@@ -384,21 +384,21 @@ class VoiceAgent:
         
         # If cleaning removed everything, return a fallback
         if not cleaned or len(cleaned) < 10:
-            logger.warning("⚠️ Cleaning removed all content - response was just metadata")
+            logger.warning(" Cleaning removed all content - response was just metadata")
             return ""
         
         # Limit response length for better voice experience
         if len(cleaned) > 800:
             cleaned = cleaned[:800] + "..."
         
-        logger.info(f"✅ Cleaned response: {cleaned[:100]}...")
+        logger.info(f" Cleaned response: {cleaned[:100]}...")
         return cleaned
 
     def _try_fallback_query(self, query: str) -> str:
         """
         Fallback method when LLM times out - gets raw search results without LLM processing.
         """
-        logger.info("🔄 Trying fallback query without LLM processing...")
+        logger.info(" Trying fallback query without LLM processing...")
         
         payload = {
             "query": query,
@@ -471,7 +471,7 @@ class VoiceAgent:
         Simple fallback that mimics what the web interface shows you.
         Gets search results without waiting for LLM processing.
         """
-        logger.info("🔄 Using web interface fallback approach...")
+        logger.info(" Using web interface fallback approach...")
         
         try:
             # Use a very simple request that should return quickly
@@ -499,9 +499,9 @@ class VoiceAgent:
 
     def run_interactive_mode(self):
         """Runs the voice agent in a continuous interactive loop."""
-        logger.info("🚀 Starting interactive voice mode...")
-        logger.info("🎙️ Say 'stop', 'quit', 'exit', or 'goodbye' to end the session.")
-        logger.info("💡 Try asking: 'What podcasts do you have?', 'Tell me about AI episodes', or 'Find Microsoft related content'")
+        logger.info(" Starting interactive voice mode...")
+        logger.info(" Say 'stop', 'quit', 'exit', or 'goodbye' to end the session.")
+        logger.info(" Try asking: 'What podcasts do you have?', 'Tell me about AI episodes', or 'Find Microsoft related content'")
         
         self.speak_response("Hello! I'm your podcast voice assistant. I can help you find episodes from Behind the Tech and Decoder podcasts. What would you like to know?")
         
@@ -522,7 +522,7 @@ class VoiceAgent:
                 
                 if user_input.lower() in ['stop', 'quit', 'exit', 'goodbye', 'bye']:
                     self.speak_response("Goodbye! Happy podcast listening!")
-                    logger.info("👋 Voice agent stopped by user.")
+                    logger.info(" Voice agent stopped by user.")
                     break
                 
                 # Handle help requests
@@ -535,11 +535,11 @@ class VoiceAgent:
                 self.speak_response(response)
                 
             except KeyboardInterrupt:
-                logger.info("\n⚡ Interrupted by user.")
+                logger.info("\n Interrupted by user.")
                 self.speak_response("Session ended. Goodbye!")
                 break
             except Exception as e:
-                logger.error(f"❌ Error in interactive mode: {e}")
+                logger.error(f" Error in interactive mode: {e}")
                 self.speak_response("Sorry, I encountered an error. Please try again.")
                 continue
 
@@ -566,12 +566,12 @@ class VoiceAgent:
             ]
         }
         
-        logger.info(f"🧪 Running {test_type} test mode...")
+        logger.info(f" Running {test_type} test mode...")
         
         for i, query in enumerate(test_queries.get(test_type, []), 1):
-            logger.info(f"\n🔢 Test {i}: '{query}'")
+            logger.info(f"\n Test {i}: '{query}'")
             response = self.query_nlweb(query)
-            logger.info(f"📝 Response: {response}")
+            logger.info(f" Response: {response}")
             logger.info("=" * 80)
             time.sleep(2)
 
@@ -604,13 +604,14 @@ def main():
             agent.run_test_mode(args.test_type)
             
     except KeyboardInterrupt:
-        logger.info("\n⚡ Program interrupted by user.")
+        logger.info("\n Program interrupted by user.")
     except Exception as e:
-        logger.error(f"❌ Fatal error: {e}")
+        logger.error(f" Fatal error: {e}")
         import traceback
         logger.error(traceback.format_exc())
     finally:
-        logger.info("🏁 Program finished.")
+        logger.info(" Program finished.")
 
 if __name__ == "__main__":
     main()
+
